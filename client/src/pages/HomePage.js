@@ -30,7 +30,7 @@ function HomePage({ handleFileUpload, handleTextSubmit, loading }) {
         flex={1.5}
       >
         <Title level={4} style={{ textAlign: "center" }}>
-          Test Deployment to S3
+          "Test Deployment to S3"
           Tailor your CV to align with the recommended job description,
           <br />
           Make your profile stand out among other candidates.
