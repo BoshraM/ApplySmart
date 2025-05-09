@@ -29,4 +29,4 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@ec2-34-245-61-235.eu-west-1.compute.amazonaws.com 'ls -al /home/ec2-user'
       - name: SSH into EC2 and restart server
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@ec2-34-245-61-235.eu-west-1.compute.amazonaws.com 'cd /home/ec2-user && npm install && npm start'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@ec2-34-245-61-235.eu-west-1.compute.amazonaws.com 'cd /home/ec2-user && npm install && pm2 start server.js --name server'
