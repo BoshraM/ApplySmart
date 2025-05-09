@@ -1,8 +1,8 @@
-name: Deploy to EC2 without Docker
+name: Deploy server to EC2
 on:
   push:
     branches:
-      - 'Dev'
+      - 'main'
 jobs:
   deploy:
     runs-on: ubuntu-latest
