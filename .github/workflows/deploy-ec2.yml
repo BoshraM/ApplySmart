@@ -1,0 +1,32 @@
+name: Deploy to EC2 without Docker
+on:
+  push:
+    branches:
+      - 'Dev'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+      - name: Create private key file
+        run: echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
+      - name: Set private key permissions
+        run: chmod 600 private_key.pem
+      - name: Create .env file
+        run: |
+          echo "OPENAI_API_KEY=${{ secrets.OPEN_AI_SECRET_KEY }}" > .env
+          echo "DB_URL=${{ secrets.DB_URL }}" >> .env
+          echo "ADZUNA_APP_KEY=${{ secrets.ADZUNA_APP_KEY }}" >> .env
+          echo "ADZUNA_APP_ID=${{ secrets.ADZUNA_APP_ID }}" >> .env
+          cat .env
+      - name: Copy files to EC2
+        run: |
+          scp -o StrictHostKeyChecking=no -i private_key.pem -r ./server/* ec2-34-245-61-235.eu-west-1.compute.amazonaws.com:/home/ec2-user
+          scp -o StrictHostKeyChecking=no -i private_key.pem ./.env ec2-34-245-61-235.eu-west-1.compute.amazonaws.com:/home/ec2-user
+      - name: Debug list files after copy
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-34-245-61-235.eu-west-1.compute.amazonaws.com 'ls -al /home/ec2-user'
+      - name: SSH into EC2 and restart server
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-34-245-61-235.eu-west-1.compute.amazonaws.com 'cd /home/ec2-user && npm install && pm2 restart server'
