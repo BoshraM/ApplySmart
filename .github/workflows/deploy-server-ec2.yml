@@ -30,6 +30,7 @@ jobs:
      
       - name: Build docker image
         run: docker build -t boshram/applysmart:${{ github.sha }} .
+        working-directory: ./server
       
       - name: Publish image to docker
         run: docker push boshram/applysmart:${{ github.sha }}
