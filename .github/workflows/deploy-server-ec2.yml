@@ -19,14 +19,27 @@ jobs:
           echo "DB_URL=${{ secrets.DB_URL }}" >> .env
           echo "ADZUNA_APP_KEY=${{ secrets.ADZUNA_APP_KEY }}" >> .env
           echo "ADZUNA_APP_ID=${{ secrets.ADZUNA_APP_ID }}" >> .env
-          cat .env
-      - name: Copy files to EC2
+
+      - name: Add .env to Docker context
         run: |
-          scp -o StrictHostKeyChecking=no -i private_key.pem -r ./server/* ec2-user@ec2-34-245-61-235.eu-west-1.compute.amazonaws.com:/home/ec2-user
-          scp -o StrictHostKeyChecking=no -i private_key.pem ./.env ec2-user@ec2-34-245-61-235.eu-west-1.compute.amazonaws.com:/home/ec2-user
-      - name: Debug list files after copy
+          mkdir -p /tmp/context
+          cp .env /tmp/context
+
+      - name: Login to Docker hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME}} -p ${{ secrets.DOCKER_PASSWORD }}
+     
+      - name: Build docker image
+        run: docker build -t boshram/applysmart:${{ github.sha }} .
+      
+      - name: Publish image to docker
+        run: docker push boshram/applysmart:${{ github.sha }}
+        
+      - name: SSH into EC2 and deploy container
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@ec2-34-245-61-235.eu-west-1.compute.amazonaws.com 'ls -al /home/ec2-user'
-      - name: SSH into EC2 and restart server
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@ec2-34-245-61-235.eu-west-1.compute.amazonaws.com 'cd /home/ec2-user && npm install && pm2 start server.js --name server'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@ec2-34-245-61-235.eu-west-1.compute.amazonaws.com << 'EOF'
+            docker system prune -a -f
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            docker pull boshram/applysmart:${{ github.sha }}
+            docker rm -f applysmart-container || true
+            docker run -d -p 5000:4000 --name applysmart-container boshram/applysmart:${{ github.sha }}
+          EOF
