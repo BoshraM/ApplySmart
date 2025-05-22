@@ -1,0 +1,12 @@
+# Ignore environment variables
+.env
+.env.*
+
+# Ignore Node modules and logs
+node_modules
+
+# Ignore Git and Docker-related files
+.git
+.gitignore
+Dockerfile
+.dockerignore
