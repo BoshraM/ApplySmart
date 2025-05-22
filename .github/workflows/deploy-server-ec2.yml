@@ -37,7 +37,7 @@ jobs:
         
       - name: SSH into EC2 and deploy container
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@ec2-34-245-61-235.eu-west-1.compute.amazonaws.com << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@ec2-52-17-13-107.eu-west-1.compute.amazonaws.com << 'EOF'
             docker system prune -a -f
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             docker pull boshram/applysmart:${{ github.sha }}
