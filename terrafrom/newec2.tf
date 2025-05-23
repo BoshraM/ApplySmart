@@ -28,6 +28,11 @@ resource "aws_instance" "cyf-server-ec2" {
                chown -R ec2-user:ec2-user /home/ec2-user/.ssh
                chmod 700 /home/ec2-user/.ssh
                chmod 600 /home/ec2-user/.ssh/authorized_keys
+
+               yum update -y >> /tmp/user_data.log
+               yum install -y docker >> /tmp/user_data.log
+               service docker start >> /tmp/user_data.log
+               usermod -aG docker ec2-user >> /tmp/user_data.log
                EOF
 
   tags = {
