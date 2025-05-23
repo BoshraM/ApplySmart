@@ -1,8 +1,10 @@
 name: Deploy server to EC2
+
 on:
   push:
     branches:
       - 'main'
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -20,21 +22,25 @@ jobs:
           echo "ADZUNA_APP_KEY=${{ secrets.ADZUNA_APP_KEY }}" >> .env
           echo "ADZUNA_APP_ID=${{ secrets.ADZUNA_APP_ID }}" >> .env
 
-      - name: Add .env to Docker context
+      - name: Add .env to Docker context (optional for local build)
         run: |
           mkdir -p /tmp/context
           cp .env /tmp/context
 
-      - name: Login to Docker hub
-        run: docker login -u ${{ secrets.DOCKER_USERNAME}} -p ${{ secrets.DOCKER_PASSWORD }}
-     
-      - name: Build docker image
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
         run: docker build -t boshram/applysmart:${{ github.sha }} .
         working-directory: ./server
-      
-      - name: Publish image to docker
+
+      - name: Publish image to Docker Hub
         run: docker push boshram/applysmart:${{ github.sha }}
-        
+
+      - name: Upload .env to EC2
+        run: |
+          scp -o StrictHostKeyChecking=no -i private_key.pem .env ec2-user@ec2-54-194-27-213.eu-west-1.compute.amazonaws.com:/home/ec2-user/.env
+
       - name: SSH into EC2 and deploy container
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@ec2-54-194-27-213.eu-west-1.compute.amazonaws.com << 'EOF'
@@ -42,5 +48,5 @@ jobs:
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             docker pull boshram/applysmart:${{ github.sha }}
             docker rm -f applysmart-container || true
-            docker run -d -p 5000:4000 --name applysmart-container boshram/applysmart:${{ github.sha }}
+            docker run -d -p 5000:4000 --env-file /home/ec2-user/.env --name applysmart-container boshram/applysmart:${{ github.sha }}
           EOF
